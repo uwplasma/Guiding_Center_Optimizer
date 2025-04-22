@@ -1,0 +1,3 @@
+Optimization Result:
+  Optimal iota: 0.4000
+  Minimum cost J: 1.4168e+00
