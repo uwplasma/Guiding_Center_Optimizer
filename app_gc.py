@@ -224,7 +224,7 @@ def main():
 
     args = parser.parse_args()
 
-    nseg = 2000
+    nseg = 1000
     T_seg = 0.01
     nseg_ps = 100
     nc = 3
