@@ -58,11 +58,11 @@ def main():
         "lambda": (0.01, 0.21),
         "G": (0.9, 1.1)
     }
-    nseg = 200
+    nseg = 2000
     T_seg = 0.01
-    nseg_ps = 200
+    nseg_ps = 100
     nus = 1
-    dt = 0.0001
+    dt = 0.001
     x = 0.1 * np.random.rand()
     y = 2.0 * np.pi * np.random.rand()
     z = 2.0 * np.pi * np.random.rand()

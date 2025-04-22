@@ -63,7 +63,7 @@ def pushSeg(nseg, nstep, nus, nc, dt, u0, vstar0, w0, par, s, param, integrator,
     return [u, w, vstar, w_perp, vstar_perp, f, J, dJdu, Rs[:-1], bs[:-1], Q_temp, p_temp]
 
 
-def nilss(dt, nseg, T_seg, nseg_ps, u0, nus, par, s, param,  integrator, fJJu):
+def nilss(dt, nseg, T_seg, nseg_ps, u0, nus, par, s, param, integrator, fJJu):
 
     nc = len(u0)
     nstep = int(round(T_seg / dt)) + 1 # number of step + 1 in each time segment

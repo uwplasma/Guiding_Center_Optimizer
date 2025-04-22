@@ -1,5 +1,3 @@
-import numpy as np
-import sympy as sp
 from functools import partial
 import jax 
 import jax.numpy as jnp
@@ -9,6 +7,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from nilss import *
 import argparse
+import os
+
 
 a0_global = 0.1
 a1_global = 1.0
@@ -101,12 +101,10 @@ dt = 0.001
 
 # def V_func(x, y, z):
 #     return np.sqrt(1.0 - lam_global * B_func(x, y, z))
-# @jit
 def B_func(x, y, z, a0, a1, lam):
     # Compute the B field
     return 1.0 + a0 * jnp.sqrt(x) * jnp.cos(y - a1 * z)
 
-# @jit
 def V_func(x, y, z, G, lam, B):
     # Compute V based on B
     return jnp.sqrt(1.0 - lam * B)
@@ -160,7 +158,6 @@ def f_ode_wrapper(u, params):
     
 #     return [dudt, dwdt.T, dvstardt]
 
-# @jit
 def ddt(uwvs, params, par):
     u, w, vstar = uwvs
     dudt = f_ode_wrapper(u, params)
@@ -199,7 +196,7 @@ def fJJu_wrapper(u, par, value):
 #     uwvs_new = [uwvs[i] + (k0[i] + 2*k1[i] + 2*k2[i] + k3[i]) / 6.0 for i in range(3)]
 #     return uwvs_new
 
-# @partial(jax.jit, static_argnames=['par'])
+@partial(jax.jit, static_argnames=['par'])
 def RK4(u, w, vstar, params, par):
     uwvs = [u, w, vstar]
     k0 = tuple(dt * comp for comp in ddt(uwvs, params, par))
@@ -222,14 +219,14 @@ def Euler(u, w, vstar, par, value):
 def main():
     parser = argparse.ArgumentParser(description='Run NILSS sensitivity analysis.')
     parser.add_argument('--par', type=str, required=True,
-                        choices=['a0', 'a1', 'iota', 'lambda', 'G'],
+                        choices=['a0', 'a1', 'iota', 'lam', 'G'],
                         help='Parameter to vary')
 
     args = parser.parse_args()
 
-    nseg = 200
+    nseg = 2000
     T_seg = 0.01
-    nseg_ps = 200
+    nseg_ps = 100
     nc = 3
     nus = 1
 
@@ -242,7 +239,7 @@ def main():
         "a0": (0.05, 0.25),
         "a1": (0.9, 1.1),
         "iota": (0.4, 0.6),
-        "lam": (0.01, 0.21),
+        "lam": (0.05, 0.25),
         "G": (0.9, 1.1)
     }
 
@@ -266,6 +263,10 @@ def main():
     #     J_arr[i] = J_val
     #     dJdpar_arr[i] = dJdpar_val
 
+
+    # TODO: make nilss() jax-ify to use vmap in the later procedure
+    # TODO: remove par and par_value later
+
     def compute_sensitivity(par_value, key):
         key, subkey = jax.random.split(key)
         x = 0.1 * jax.random.uniform(subkey)
@@ -277,33 +278,51 @@ def main():
         print(f'{par} = {par_value}, u0 = {u0}')
         params = default_params.copy()
         params[par] = par_value
-        # TODO: make nilss() jax-ify to use vmap in the later procedure
-        # TODO: remove par and par_value later
         J_val, dJdpar_val = nilss(dt, nseg, T_seg, nseg_ps, u0, nus, par, float(par_value), params, RK4, fJJu_wrapper)
-        return J_val, dJdpar_val
-    
+        return J_val, dJdpar_val, key
+
     key = jax.random.PRNGKey(20250407)
     J_arr = []
     dJdpar_arr = []
     for par_value in par_arr:
-        J_val, dJdpar_val = compute_sensitivity(par_value, key)
+        J_val, dJdpar_val, key = compute_sensitivity(par_value, key)
         J_arr.append(J_val)
         dJdpar_arr.append(dJdpar_val)
     J_arr = jnp.array(J_arr)
     dJdpar_arr = jnp.array(dJdpar_arr)
 
-    plt.figure(figsize=[12, 12])
+
+    output_dir = "result"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    par_latex = {
+        'a0': r'a_0',
+        'a1': r'a_1',
+        'lam': r'\lambda',
+        'iota': r'\iota',
+        'G': r'G'
+    }
+    par_label = par_latex.get(par, par)
+
+    plt.figure(figsize=(12, 12))
+
+    # Plot for time-averaged x
     plt.subplot(2, 1, 1)
-    plt.plot(par_arr, J_arr, marker='o')
-    plt.xlabel(rf'${par}$')
-    plt.ylabel(r'$\langle x \rangle$')
+    plt.plot(par_arr, J_arr)
+    plt.axhline(y=0, color='k', linestyle='--', linewidth=1)  # horizontal line at y=0
+    plt.xlabel(fr'${par_label}$')
+    plt.ylabel(r'$\langle J \rangle$')
 
+    # Plot for sensitivity of J
     plt.subplot(2, 1, 2)
-    plt.plot(par_arr, dJdpar_arr, marker='s')
-    plt.xlabel(rf'${par}$')
-    plt.ylabel(rf'$\frac{{d\langle J \rangle}}{{d {par}}}$')
+    plt.plot(par_arr, dJdpar_arr, marker='s', linestyle='-')
+    plt.axhline(y=0, color='k', linestyle='--', linewidth=1)  # horizontal line at y=0
+    plt.xlabel(fr'${par_label}$')
+    plt.ylabel(fr"$d \langle J \rangle /d {par_label}$", fontsize=14)
 
-    plt.savefig(f'guiding_center_{par}.png')
+    save_path = os.path.join(output_dir, f'guiding_center_{par}.png')
+    plt.savefig(save_path)
 
 if __name__ == '__main__':
     main()
