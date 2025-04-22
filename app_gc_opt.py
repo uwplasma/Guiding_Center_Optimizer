@@ -6,17 +6,12 @@ import jax.numpy as jnp
 from jaxopt import LBFGS
 from nilss import nilss
 from app_gc import RK4, Euler, fJJu_wrapper, default_params
-import numpy as np
 
 def objective_fn(par_value, given_params, u0, nus, dt, nseg, T_seg, nseg_ps, integrator, fJJu, par_name):
-    # Extract scalar from parameter vector.
     par_scalar = par_value[0]
     params = given_params.copy()
-    # Update the parameter dictionary using the provided input.
     params[par_name] = par_scalar
-    # Call nilss and ignore the computed sensitivity.
-    # Let JAX autodiff deduce the gradient of J.
-    J, _ = nilss(
+    J, dJdpar = nilss(
         dt=dt,
         nseg=nseg,
         T_seg=T_seg,
@@ -34,11 +29,9 @@ def objective_fn(par_value, given_params, u0, nus, dt, nseg, T_seg, nseg_ps, int
 def jax_optimize_guiding_center_nilss(par_name, par_bounds, given_params, u0, nus, dt, nseg, T_seg, nseg_ps, integrator, fJJu, maxiter=100):
     def wrapped_obj(par_value):
         return objective_fn(par_value, given_params, u0, nus, dt, nseg, T_seg, nseg_ps, integrator, fJJu, par_name)
-    # Use autodiff provided by jax.value_and_grad.
     value_and_grad_fn = jax.value_and_grad(wrapped_obj)
     key = jax.random.PRNGKey(0)
-    # Initialize the parameter randomly between par_bounds[0] and 1.
-    init_par = jax.random.uniform(key, shape=(1,), minval=par_bounds[0], maxval=1.0)
+    init_par = jax.random.uniform(key, shape=(1,), minval=par_bounds[0], maxval=par_bounds[1])
     solver = LBFGS(fun=value_and_grad_fn, maxiter=maxiter)
     result = solver.run(init_par)
     return result
@@ -65,12 +58,13 @@ def main():
     nus = 1
     dt = 0.001
 
-    x = 0.1 * np.random.rand()
-    y = 2.0 * np.pi * np.random.rand()
-    z = 2.0 * np.pi * np.random.rand()
-    u0 = np.array([x, y, z])
+    x = 0.1 * jnp.random.rand()
+    y = 2.0 * jnp.pi * jnp.random.rand()
+    z = 2.0 * jnp.pi * jnp.random.rand()
+    u0 = jnp.array([x, y, z])
+
+    print(f"Initial condition: {u0}")
     
-    # Use fJJu_wrapper, which accepts three arguments.
     result = jax_optimize_guiding_center_nilss(par, par_limit[par], default_params, u0, nus, dt, nseg, T_seg, nseg_ps, RK4, fJJu_wrapper)
     
     results_dir = "results"
