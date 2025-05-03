@@ -1,3 +1,0 @@
-Optimization Result:
-  Optimal G: 0.9000
-  Minimum cost J: 1.4503e+00
