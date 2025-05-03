@@ -83,10 +83,10 @@ def main():
     
     result = jax_optimize_guiding_center_nilss(par, par_limit[par], default_params, u0, nus, dt, nseg, T_seg, nseg_ps, RK4, fJJu_wrapper)
     
-    results_dir = "results"
-    os.makedirs(results_dir, exist_ok=True)
-    text_result_path = os.path.join(results_dir, f"optimization_guiding_center_results_{par}.txt")
-    with open(text_result_path, "w") as f:
+    output_dir = "optimization_results"
+    os.makedirs(output_dir, exist_ok=True)
+    text_output_path = os.path.join(output_dir, f"optimization_guiding_center_results_{par}.txt")
+    with open(text_output_path, "w") as f:
         f.write("Optimization Result:\n")
         f.write(f"  Optimal {par}: {result.x[0]:.4f}\n")
         f.write(f"  Minimum cost J: {result.fun:.4e}\n")

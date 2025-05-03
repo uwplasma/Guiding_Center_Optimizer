@@ -292,7 +292,7 @@ def main():
     dJdpar_arr = jnp.array(dJdpar_arr)
 
 
-    output_dir = "result"
+    output_dir = "nilss_results"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 

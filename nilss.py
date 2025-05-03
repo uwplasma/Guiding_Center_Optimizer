@@ -1,23 +1,19 @@
-import jax
 import jax.numpy as jnp
 from jax import random, jit
 
 def block_diag_jax(*arrs):
-    """Construct a block diagonal matrix from given 2D arrays using jax.lax.fori_loop for improved performance."""
+    """Construct a block diagonal matrix from given 2D arrays."""
     if not arrs:
         return jnp.array([[]])
-    shapes = [(a.shape[0], a.shape[1]) for a in arrs]
-    total_rows = sum(s[0] for s in shapes)
-    total_cols = sum(s[1] for s in shapes)
-
-    def body_fun(i, state):
-        out, row_offset, col_offset = state
-        a = arrs[i]
-        out = jax.lax.dynamic_update_slice(out, a, (row_offset, col_offset))
-        return (out, row_offset + a.shape[0], col_offset + a.shape[1])
-
-    init_state = (jnp.zeros((total_rows, total_cols), dtype=arrs[0].dtype), 0, 0)
-    out, _, _ = jax.lax.fori_loop(0, len(arrs), body_fun, init_state)
+    out_rows = sum(arr.shape[0] for arr in arrs)
+    out_cols = sum(arr.shape[1] for arr in arrs)
+    out = jnp.zeros((out_rows, out_cols), dtype=arrs[0].dtype)
+    r, c = 0, 0
+    for arr in arrs:
+        r_, c_ = arr.shape
+        out = out.at[r:r+r_, c:c+c_].set(arr)
+        r += r_
+        c += c_
     return out
 
 
