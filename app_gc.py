@@ -102,11 +102,9 @@ dt = 0.001
 # def V_func(x, y, z):
 #     return np.sqrt(1.0 - lam_global * B_func(x, y, z))
 def B_func(x, y, z, a0, a1, lam):
-    # Compute the B field
     return 1.0 + a0 * jnp.sqrt(x) * jnp.cos(y - a1 * z)
 
 def V_func(x, y, z, G, lam, B):
-    # Compute V based on B
     return jnp.sqrt(1.0 - lam * B)
 
 
@@ -162,14 +160,14 @@ def ddt(uwvs, params, par):
     u, w, vstar = uwvs
     dudt = f_ode_wrapper(u, params)
     Df = jacobian(f_ode_wrapper, argnums=0)(u, params)
-    dwdt = jnp.dot(Df, w.T).T
+    dwdt = jnp.dot(Df, w.T)
     def f_par(p_val):
         new_params = params.copy()
         new_params[par] = p_val
         return f_ode_wrapper(u, new_params)
     dfdpar = jacobian(f_par)(params[par])
     dvstardt = jnp.dot(Df, vstar) + dfdpar
-    return (dudt, dwdt, dvstardt)
+    return (dudt, dwdt.T, dvstardt)
 
 
 # def fJJu(u, par, value):
@@ -235,6 +233,7 @@ def main():
     # precomputed_spatial_derivatives = compute_spatial_derivatives()
 
     par = args.par
+    print(par)
     par_limit = {
         "a0": (0.05, 0.25),
         "a1": (0.9, 1.1),

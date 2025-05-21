@@ -1,0 +1,5 @@
+Optimization Result:
+  Optimal a0: 0.2500
+  Optimal a1: 0.9000
+  Optimal iota: 0.6000
+  Minimum J: -2.1150e+01

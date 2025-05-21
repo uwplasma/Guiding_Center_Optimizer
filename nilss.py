@@ -44,7 +44,8 @@ def pushSeg(nseg, nstep, nus, nc, dt, u0, vstar0, w0, par, s, param, integrator,
 
     # push forward
     for iseg in range(0, nseg):
-
+        # if iseg % 10 == 0:
+        #     print(f"Current segment: {iseg}")
         # compute u, w, vstar, f, J, dJdu for current segment
         for istep in range(0, nstep-1):
             u_next, w_next, vstar_next = integrator(u[iseg, istep], w[iseg, istep], vstar[iseg, istep], param, par)
