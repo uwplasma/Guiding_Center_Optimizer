@@ -1,3 +1,7 @@
-Optimization Result:
-  Optimal a0: 0.0500
-  Minimum J: -9.3130e-01
+Optimization Result (NILSS):
+  NILSS optimal a0: 0.0500
+  NILSS minimum J: -9.3130e-01
+
+Optimization Result (2-point):
+  2-point optimal a0: 0.2500
+  2-point minimum J: -1.3551e+01
