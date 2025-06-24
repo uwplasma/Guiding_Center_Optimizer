@@ -132,7 +132,7 @@ def f_ode(x, y, z, a0, a1, iota, G, lam):
     V = V_func(x, y, z, G, lam, B)
     dfdy = invB * dBdx * factor + (iota * V * B) / G
     dfdz = (B * V) / G
-    return jnp.array([dfdx, dfdy, dfdz])
+    return jnp.array([dfdx, dfdy, dfdz]).reshape(-1)
 
 def f_ode_wrapper(u, params):
     x, y, z = u
